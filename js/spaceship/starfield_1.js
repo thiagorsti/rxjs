@@ -13,4 +13,17 @@ var starStream = Rx.Observable.range(1, STAR_NUMBER)
             y: parseInt(Math.random() * canvas.height),
             size: Math.random() * 3 + 1
         };
-    });
+    })
+    .toArray()
+    .flatMap(function(starArray){
+        return Rx.Observable.interval(SPEED)
+            .map(function(){
+                starArray.forEach(function(star){
+                    if (star.y >= canvas.height) {
+                        star.y = 0;
+                    }
+                    star.y += 3;
+                });
+                return starArray;
+            });
+    })
