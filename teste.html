@@ -2,9 +2,10 @@
 <html lang="en-us">
     <head>
         <meta charset="utf-8">
-        <script src="./js/lib/rx.all.min.js"></script>        
+        <script src="./js/lib/rx.all.min.js"></script>
+        <script src="./js/lib/rx.dom.min.js"></script>      
         <script type="text/javascript">
-            function updateDistance(acc, i) {
+            /*function updateDistance(acc, i) {
                 if (i % 2 === 0) {
                     acc += 1;
                 }
@@ -20,7 +21,36 @@
             });
             ticksObservable.subscribe(function(evenTicks) {
                 console.log('Subscriber 2 - evenTicks: ' + evenTicks + ' so far');
-            });
+            });*/
+            var QUAKE_URL = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojsonp';
+           function getProducts() {
+               var subject;
+               return Rx.Observable.create(function(observer){                   
+                   if (!subject) {
+                       console.log('Subject null');
+                       subject = new Rx.AsyncSubject();
+                        Rx.DOM.jsonpRequest({
+                            url: QUAKE_URL,
+                            jsonpCallback: 'eqfeed_callback'
+                        })
+                        .subscribe(subject);
+                   }
+                   return subject.subscribe(observer);                   
+               });
+           }           
+           var products = getProducts();
+           var subs1 = products.subscribe(
+               function onNext(result) { console.log('Result 1:', result.response); },
+               function onError(error) { console.log('ERROR', error); }
+           );
+           subs1.dispose();
+           setTimeout(function() {
+               console.log('setTimeout');
+               products.subscribe(
+                   function onNext(result) { console.log('Result 2:', result.response); },
+                   function onError(error) { console.log('ERROR', error); }
+               );
+           }, 5000);
         </script>
     </head>
     <body>
