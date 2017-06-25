@@ -1,11 +1,3 @@
-var SHOOTING_SPEED = 15;
-
-function paintHeroShots(heroShots) {
-    heroShots.forEach(function(shot){
-        shot.y -= SHOOTING_SPEED;
-        drawTriangle(shot.x, shot.y, 5, '#ffff00', 'up');
-    });
-}
 
 var playerFiring = Rx.Observable
     .merge(

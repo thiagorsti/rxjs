@@ -1,8 +1,9 @@
-function renderScene(actors) {
+function renderScene(actors) {    
     paintStars(actors.stars);
     paintSpaceShip(actors.spaceship.x, actors.spaceship.y);
     paintEnemies(actors.enemies);
-    paintHeroShots(actors.heroShots);
+    paintHeroShots(actors.heroShots, actors.enemies);
+    paintScore(actors.score);
 }
 
 function drawTriangle(x, y, width, color, direction) {
