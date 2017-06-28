@@ -18,17 +18,6 @@
     </head>
     <body>
         <div id="map"></div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Location</th>
-                    <th>Magnitude</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody id="quakes_info">
-            </tbody>
-        </table>
         <script>
             var QUAKE_URL = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojsonp';
 
@@ -43,6 +32,6 @@
             var map = L.map('map').setView([33.858631, -118.279602], 7);
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
         </script>
-        <script src="./js/code2.js"></script>
+        <script src="./js/code1_4.js"></script>
     </body>
 </html>
