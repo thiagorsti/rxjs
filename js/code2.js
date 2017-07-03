@@ -15,7 +15,7 @@ function makeRow(props) {
 function initialize() {
     var quakes = Rx.Observable
         .interval(5000)
-        .flatMap(function(){
+        .flatMap(function(){            
             return Rx.DOM.jsonpRequest({
                 url: QUAKE_URL,
                 jsonpCallback: 'eqfeed_callback'
@@ -24,7 +24,8 @@ function initialize() {
     .flatMap(function(result){
         return Rx.Observable.from(result.response.features);
     })
-    .distinct(function(quake) { return quake.properties.code; });
+    .distinct(function(quake) { return quake.properties.code; })
+    .share();
 
     quakes.subscribe(function(quake) {
         var coords = quake.geometry.coordinates;
@@ -32,10 +33,20 @@ function initialize() {
         L.circle([coords[1], coords[0]], size).addTo(map);
     });
 
+    var cont = 0;
     var table = document.getElementById('quakes_info');
     quakes
-        .pluck('properties')
+        .pluck('properties')        
         .map(makeRow)
+        .bufferWithTime(500)
+        .filter(function(rows) { console.log(++cont); return rows.length > 0; })
+        .map(function(rows){
+            var fragment = document.createDocumentFragment();
+            rows.forEach(function(row){
+                fragment.appendChild(row);
+            });
+            return fragment;
+        })
         .subscribe(function(row){
             table.appendChild(row);
         });
