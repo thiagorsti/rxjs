@@ -22,35 +22,50 @@
             ticksObservable.subscribe(function(evenTicks) {
                 console.log('Subscriber 2 - evenTicks: ' + evenTicks + ' so far');
             });*/
-            var QUAKE_URL = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojsonp';
-           function getProducts() {
-               var subject;
-               return Rx.Observable.create(function(observer){                   
-                   if (!subject) {
-                       console.log('Subject null');
-                       subject = new Rx.AsyncSubject();
-                        Rx.DOM.jsonpRequest({
-                            url: QUAKE_URL,
-                            jsonpCallback: 'eqfeed_callback'
-                        })
-                        .subscribe(subject);
-                   }
-                   return subject.subscribe(observer);                   
-               });
-           }           
-           var products = getProducts();
-           var subs1 = products.subscribe(
-               function onNext(result) { console.log('Result 1:', result.response); },
-               function onError(error) { console.log('ERROR', error); }
-           );
-           subs1.dispose();
-           setTimeout(function() {
-               console.log('setTimeout');
-               products.subscribe(
-                   function onNext(result) { console.log('Result 2:', result.response); },
-                   function onError(error) { console.log('ERROR', error); }
-               );
-           }, 5000);
+        //     var QUAKE_URL = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojsonp';
+        //    function getProducts() {
+        //        var subject;
+        //        return Rx.Observable.create(function(observer){                   
+        //            if (!subject) {
+        //                console.log('Subject null');
+        //                subject = new Rx.AsyncSubject();
+        //                 Rx.DOM.jsonpRequest({
+        //                     url: QUAKE_URL,
+        //                     jsonpCallback: 'eqfeed_callback'
+        //                 })
+        //                 .subscribe(subject);
+        //            }
+        //            return subject.subscribe(observer);                   
+        //        });
+        //    }           
+        //    var products = getProducts();
+        //    var subs1 = products.subscribe(
+        //        function onNext(result) { console.log('Result 1:', result.response); },
+        //        function onError(error) { console.log('ERROR', error); }
+        //    );
+        //    subs1.dispose();
+        //    setTimeout(function() {
+        //        console.log('setTimeout');
+        //        products.subscribe(
+        //            function onNext(result) { console.log('Result 2:', result.response); },
+        //            function onError(error) { console.log('ERROR', error); }
+        //        );
+        //    }, 5000);
+        var source = Rx.Observable.interval(1000);
+        var publisher = source.publish();
+        // Even if we are subscribing, no values are pushed yet.
+        var observer1 = publisher.subscribe(function (x) {
+            console.log('Observer 1: ' + x);
+        });
+        // publisher connects and starts publishing values
+        publisher.connect();
+        setTimeout(function() {
+        // 5 seconds later, observer2 subscribes to it and starts receiving
+        // current values, not the whole sequence.
+            var observer2 = publisher.subscribe(function (x) {
+                console.log('Observer 2: ' + x);
+            });
+        }, 5000);
         </script>
     </head>
     <body>
