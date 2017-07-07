@@ -1,17 +1,17 @@
 var codeLayers = {};
 var quakeLayer = L.layerGroup([]).addTo(map);
 
-var identity = Rx.helpers.identity;
+// var identity = Rx.helpers.identity;
 
-function isHovering(element) {
-    var over = Rx.DOM.mouseover(element).map(identity(true));
-    var out = Rx.DOM.mouseout(element).map(identity(false));
-    return over.merge(out);
-}
+// function isHovering(element) {
+//     var over = Rx.DOM.mouseover(element).map(identity(true));
+//     var out = Rx.DOM.mouseout(element).map(identity(false));
+//     return over.merge(out);
+// }
 
 function makeRow(props) {
     var row = document.createElement('tr');
-    row.id = props.net + props.code;
+    row.id = props.code;
 
     var date = new Date(props.time);
     var time = date.toString();
@@ -44,35 +44,51 @@ function initialize() {
         
         var circle = L.circle([coords[1], coords[0]], size).addTo(map);
         quakeLayer.addLayer(circle);
-        codeLayers[quake.properties.net + quake.properties.code] = quakeLayer.getLayerId(circle);
+        codeLayers[quake.properties.code] = quakeLayer.getLayerId(circle);
     });
-
-    var cont = 0;
+    
     var table = document.getElementById('quakes_info');
+
+    function getRowFromEvent(event) {
+        return Rx.Observable
+            .fromEvent(table, event)
+            .filter(function(event){
+                var el = event.target;
+                return el.tagName === 'TD' && el.parentNode.id.length;
+            })
+            .pluck('target', 'parentNode')
+            .distinctUntilChanged();
+    }
+
+    getRowFromEvent('mouseover')        
+        .pairwise()
+        .subscribe(function(rows){
+            var prevCircle = quakeLayer.getLayer(codeLayers[rows[0].id]);
+            var currCircle = quakeLayer.getLayer(codeLayers[rows[1].id]);
+
+            prevCircle.setStyle({ color: '#0000ff' });
+            currCircle.setStyle({ color: '#ff0000' });
+
+            console.log('rows[0]: ' + rows[0].id);
+            console.log('rows[0]: ' + rows[1].id);
+        });
+
+    getRowFromEvent('click')
+        .subscribe(function(row){
+            var circle = quakeLayer.getLayer(codeLayers[row.id]);
+            map.panTo(circle.getLatLng());
+        })
+
     quakes
         .pluck('properties')        
         .map(makeRow)
         .bufferWithTime(500)
-        .filter(function(rows) { console.log(++cont); return rows.length > 0; })
-        .map(function(rows){
+        .filter(function(rows) { return rows.length > 0; })
+        .subscribe(function(rows){
             var fragment = document.createDocumentFragment();
             rows.forEach(function(row){
                 fragment.appendChild(row);
             });
-            return fragment;
-        })
-        .subscribe(function(fragment){
-            var row = fragment.firstChild;
-            var circle = quakeLayer.getLayer(codeLayers[row.id]);
-            
-            isHovering(row).subscribe(function(hovering){
-                circle.setStyle({ color: hovering ? '#ff0000' : '#0000ff' });
-            });
-
-            RX.DOM.click(row).subscribe(function(){
-                map.panTo(circle.getLatLng());
-            });
-        
             table.appendChild(fragment);
         });
 }
