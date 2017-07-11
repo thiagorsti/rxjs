@@ -24,14 +24,15 @@ function makeRow(props) {
 }
 
 function initialize() {
-    var socket;
-    var openObserver = Rx.Observer.create(function(e) {
-        console.info('socket open');
-        // Now it is safe to send a message
-        socket.onNext('test');
-    });
+    // var socket;
+    // var openObserver = Rx.Observer.create(function(e) {
+    //     console.info('socket open');
+    //     // Now it is safe to send a message
+    //     socket.onNext('test');
+    //     socket.onNext('Qualquer coisa');
+    // });
     
-    socket = Rx.DOM.fromWebSocket('ws://localhost:8080', null, openObserver);
+    var socket = Rx.DOM.fromWebSocket('ws://localhost:8080/');
     var quakes = Rx.Observable
         .interval(5000)
         .flatMap(function(){            
@@ -57,7 +58,7 @@ function initialize() {
                     mag: quake.properties.mag
                 };
             });
-            //socket.onNext(JSON.stringify({quakes: quakesData }));
+            socket.onNext(JSON.stringify({quakes: quakesData }));
         });
 
     socket.subscribe(function(message){

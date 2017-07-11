@@ -1,4 +1,5 @@
-var WebSocketServer = require('ws').Server;
+var WebSocket = require('ws');
+var wss = new WebSocket.Server({ port: 8080 });
 var Twit = require('twit');
 var Rx = require('rx');
 
@@ -9,20 +10,11 @@ var Rx = require('rx');
 //     access_token_secret: '57Dr99wECljyyQ9tViJWz0H3obNG3V4cr5Lix9sQBXju1'
 // });
 
-function onConnect(ws) {
-    console.log('Client connected on localhost:8080');
-    ws.send('teste');
-}
-
-var ws = new WebSocketServer({ port: 8080 });
-Rx.Observable.fromEvent(ws, 'connection').subscribe(onConnect);
-
-ws.on('message', function(event){
-    console.log(event);
-});
-
-// var onMessage = Rx.Observable.fromEvent(ws, 'message')
-//     .subscribe(function(quake) {
-//         quake = JSON.parse(quake);
-//         console.log(quake);
-//     });
+Rx.Observable.fromEvent(wss, 'connection')
+    .subscribe(function(ws){
+        ws.send('Mensagem do servidor');
+        Rx.Observable.fromEvent(ws, 'message')
+            .subscribe(function(message){
+                console.log(message);
+            });
+    });
