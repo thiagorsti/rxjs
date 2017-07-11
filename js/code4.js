@@ -24,6 +24,14 @@ function makeRow(props) {
 }
 
 function initialize() {
+    var socket;
+    var openObserver = Rx.Observer.create(function(e) {
+        console.info('socket open');
+        // Now it is safe to send a message
+        socket.onNext('test');
+    });
+    
+    socket = Rx.DOM.fromWebSocket('ws://localhost:8080', null, openObserver);
     var quakes = Rx.Observable
         .interval(5000)
         .flatMap(function(){            
@@ -37,6 +45,25 @@ function initialize() {
     })
     .distinct(function(quake) { return quake.properties.code; })
     .share();
+    
+    quakes.bufferWithCount(100)
+        .subscribe(function(quakes){
+            console.log(quakes);
+            var quakesData = quakes.map(function(quake){
+                return {
+                    id: quake.properties.net + quake.properties.code,
+                    lat: quake.geometry.coordinates[1],
+                    lng: quake.geometry.coordinates[0],
+                    mag: quake.properties.mag
+                };
+            });
+            //socket.onNext(JSON.stringify({quakes: quakesData }));
+        });
+
+    socket.subscribe(function(message){
+        //console.log(JSON.parse(message.data));
+        console.log(message);
+    });
 
     quakes.subscribe(function(quake) {
         var coords = quake.geometry.coordinates;
@@ -70,9 +97,6 @@ function initialize() {
             }
             var currCircle = quakeLayer.getLayer(codeLayers[rows[1].id]);
             currCircle.setStyle({ color: '#ff0000' });
-
-            console.log('rows[0]: ' + rows[0]);
-            console.log('rows[0]: ' + rows[1]);
         });
 
     getRowFromEvent('click')
