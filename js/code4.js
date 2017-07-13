@@ -61,10 +61,32 @@ function initialize() {
             socket.onNext(JSON.stringify({quakes: quakesData }));
         });
 
-    socket.subscribe(function(message){
-        //console.log(JSON.parse(message.data));
-        console.log(message);
-    });
+    function makeTweetElement(tweetObj) {
+        var tweetEl = document.createElement('div');
+        tweetEl.className = 'tweet';
+
+        var content = '<img src="$tweetImg" class="avatar" />' +
+            '<div class="content">$text</div>' +
+            '<div class="time">$time</div>';
+        
+        var time = new Date(tweetObj.created_at);
+        var timeText = time.toLocaleDateString() + ' ' + time.toLocaleTimeString();
+
+        content = content.replace('$tweetImg', tweetObj.user.profile_image_url);
+        content = content.replace('$text', tweetObj.text);
+        content = content.replace('$time', timeText);
+
+        tweetEl.innerHTML = content;
+
+        return tweetEl;
+    }
+
+    socket
+        .map(function(message){ return JSON.parse(message.data); })
+        .subscribe(function(data){
+            var container = document.getElementById('tweet_container');
+            container.insertBefore(makeTweetElement(data), container.firstChild);
+        });
 
     quakes.subscribe(function(quake) {
         var coords = quake.geometry.coordinates;

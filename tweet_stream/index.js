@@ -21,11 +21,15 @@ var T = new Twit({
 
 function onConnect(ws) {
 
-    var stream = T.stream('statuses/filter',
+    var stream;
+    function startTwitStream(locations) {
+        stream = T.stream('statuses/filter',
         {
             track: 'earthquake',
-            locations: []
+            locations: locations
         });
+    }
+    startTwitStream('');
 
     Rx.Observable
         .fromEvent(ws, 'message')        
@@ -33,22 +37,21 @@ function onConnect(ws) {
             quakesObj = JSON.parse(quakesObj);            
             return Rx.Observable.from(quakesObj.quakes);
         })
-        .scan([], function(boundsArray, quake){
+        .scan(function(boundsArray, quake){
             var bounds = [
                 quake.lng - 0.3, quake.lat - 0.15,
                 quake.lng + 0.3, quake.lat + 0.15
             ].map(function(coordinate){
                 coordinate = coordinate.toString();
                 return coordinate.match(/\-?\d+(\.\-?\d{2})?/)[0];
-            });
-            boundsArray.concat(bounds);
-            return boundsArray.slice(Math.max(boundsArray.length - 50), 0);
-        })
-        .subscribe(function(boundsArray){
-            console.log(boundsArray);
+            });            
+            var arr = boundsArray.concat(bounds);
+            arr.slice(Math.max(arr.length - 50), 0);
+            return arr;
+        }, [])        
+        .subscribe(function(boundsArray){            
             stream.stop();
-            stream.params.locations = boundsArray.toString();
-            stream.start();
+            startTwitStream(boundsArray.toString());
         });
 
         Rx.Observable.fromEvent(stream, 'tweet')
